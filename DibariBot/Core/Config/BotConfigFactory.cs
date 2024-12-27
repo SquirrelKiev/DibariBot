@@ -8,10 +8,9 @@ namespace DibariBot;
 
 public class BotConfigFactory
 {
-    private static string DataDir => Path.Combine(AppContext.BaseDirectory, "data");
-
-    private static string ConfigPath => Environment.GetEnvironmentVariable("BOT_CONFIG_LOCATION") ??
-                                         Path.Combine(DataDir, "bot_config.yaml");
+    public static readonly string DefaultDataDirectory = Path.Combine(Path.Combine(AppContext.BaseDirectory, "data"));
+    private static readonly string ConfigPath = Environment.GetEnvironmentVariable("BOT_CONFIG_LOCATION") ??
+                                                Path.Combine(DefaultDataDirectory, "bot_config.yaml");
 
     public bool GetConfig([NotNullWhen(true)] out BotConfig? botConfig)
     {
@@ -24,8 +23,6 @@ public class BotConfigFactory
             .WithNamingConvention(UnderscoredNamingConvention.Instance)
             .IgnoreUnmatchedProperties()
             .Build();
-
-        Directory.CreateDirectory(DataDir);
 
         if (!File.Exists(ConfigPath))
         {

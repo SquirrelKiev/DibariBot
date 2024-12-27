@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using System.Globalization;
+using Microsoft.Extensions.Hosting;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Serilog.Extensions.Logging;
@@ -12,56 +13,75 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
 using Serilog;
+using Serilog.Core;
 
 namespace DibariBot;
 
 public static class Startup
 {
-#pragma warning disable IDE0060 // Remove unused parameter
-    public static async Task Main(string[] args)
-#pragma warning restore IDE0060 // Remove unused parameter
+    public static async Task Main()
     {
-        Console.OutputEncoding = Encoding.UTF8;
-        Log.Logger = new LoggerConfiguration().WriteTo.Console(outputTemplate: "[FALLBACK] [{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}").CreateLogger();
-
-        if (!new BotConfigFactory().GetConfig(out var botConfig))
+        Logger? logger = null;
+        try
         {
-            Environment.Exit(1);
+            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+            CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
+
+            Console.OutputEncoding = Encoding.UTF8;
+            Log.Logger = new LoggerConfiguration().WriteTo
+                .Console(
+                    outputTemplate: "[FALLBACK] [{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+                .CreateLogger();
+
+            if (!new BotConfigFactory().GetConfig(out var botConfig))
+            {
+                Environment.Exit(1);
+            }
+
+            if (!botConfig.IsValid())
+            {
+                Environment.Exit(1);
+            }
+
+            var builder = new HostBuilder();
+
+            var logLevel = botConfig.LogEventLevel;
+
+            var logConfig = new LoggerConfiguration()
+                    .MinimumLevel.Is(logLevel)
+                    .Enrich.FromLogContext()
+                    .Enrich.WithThreadId()
+                    .Enrich.WithThreadName()
+                    .Enrich.WithThreadName()
+                    .WriteTo.Console(theme: AnsiConsoleTheme.Literate)
+                ;
+
+            Directory.CreateDirectory(BotConfigFactory.DefaultDataDirectory);
+
+            if (!string.IsNullOrWhiteSpace(botConfig.SeqUrl))
+            {
+                logConfig.WriteTo.Seq(botConfig.SeqUrl, apiKey: botConfig.SeqApiKey);
+            }
+
+            logger = logConfig.CreateLogger();
+            builder.ConfigureLogging(logging =>
+                    logging.AddSerilog(logger)
+                        .AddFilter<SerilogLoggerProvider>("Microsoft.Extensions.Http.DefaultHttpClientFactory",
+                            LogLevel.Warning)
+                        .AddFilter<SerilogLoggerProvider>("Microsoft.EntityFrameworkCore.*", LogLevel.Warning))
+                ;
+
+            builder.ConfigureServices(x => x.AddBotServices(botConfig));
+            builder.ConfigureHostConfiguration(
+                configBuilder => configBuilder.AddEnvironmentVariables(prefix: "DOTNET_"));
+
+            await builder.RunConsoleAsync();
         }
-        if (!botConfig.IsValid())
+        finally
         {
-            Environment.Exit(1);
+            if (logger != null)
+                await logger.DisposeAsync();
         }
-
-        var builder = new HostBuilder();
-
-        var logLevel = botConfig.LogEventLevel;
-
-        var logConfig = new LoggerConfiguration()
-            .MinimumLevel.Is(logLevel)
-            .Enrich.FromLogContext()
-            .Enrich.WithThreadId()
-            .Enrich.WithThreadName()
-            .Enrich.WithThreadName()
-            .WriteTo.Console(theme: AnsiConsoleTheme.Literate)
-        ;
-
-        if (!string.IsNullOrWhiteSpace(botConfig.SeqUrl))
-        {
-            logConfig.WriteTo.Seq(botConfig.SeqUrl, apiKey: botConfig.SeqApiKey);
-        }
-
-        var logger = logConfig.CreateLogger();
-        builder.ConfigureLogging(logging =>
-            logging.AddSerilog(logger)
-                .AddFilter<SerilogLoggerProvider>("Microsoft.Extensions.Http.DefaultHttpClientFactory", LogLevel.Warning)
-                .AddFilter<SerilogLoggerProvider>("Microsoft.EntityFrameworkCore.*", LogLevel.Warning))
-            ;
-
-        builder.ConfigureServices(x => x.AddBotServices(botConfig));
-        builder.ConfigureHostConfiguration(configBuilder => configBuilder.AddEnvironmentVariables(prefix: "DOTNET_"));
-
-        await builder.RunConsoleAsync();
     }
 
     private static IServiceCollection AddBotServices(this IServiceCollection serviceCollection, BotConfig botConfig)
