@@ -80,7 +80,7 @@ public class MangaModule(MangaService mangaHandler) : BotModule
         var isEphemeral = (ogRes.Flags & MessageFlags.Ephemeral) != 0 && !shouldResend;
 
         var contents =
-            await mangaHandler.GetMangaMessage(Context.Guild?.Id ?? 0ul, GetParentChannel().Id, state, isEphemeral);
+            await mangaHandler.GetMangaMessage(Context.Guild?.Id ?? 0ul, GetParentChannel()?.Id ?? 0ul, state, isEphemeral);
 
         // it's probably an error
         if (contents.components == null || contents.components.Components.Sum(component => component.Components.Count) <= 1)
