@@ -1,6 +1,6 @@
 services:
   dibari:
-    image: dibari-bot:latest
+    image: ghcr.io/squirrelkiev/dibaribot:main
     volumes:
       - botdata:/data
     depends_on:
