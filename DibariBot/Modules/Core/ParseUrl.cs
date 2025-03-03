@@ -45,14 +45,10 @@ public static class ParseUrl
             seriesIdentifier.platform = "mangadex";
             seriesIdentifier.series = Regex.Match(url, @"(\/?)([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})").Groups[2].Value;
         }
-        else if (Regex.IsMatch(url, @"mangasee123\.com") || Regex.IsMatch(url, @"manga4life\.com"))
+        else if (Regex.IsMatch(url, @"^https:\/\/weebcentral.com\/series\/[a-zA-Z0-9]*\/"))
         {
-            seriesIdentifier.platform = "mangasee";
-            url = url.TrimEnd('/');
-            if (url.Contains("/manga/"))
-            {
-                seriesIdentifier.series = url.Split("/manga/")[^1];
-            }
+            seriesIdentifier.platform = "weebcentral";
+            seriesIdentifier.series = Regex.Match(url, @"^https:\/\/weebcentral.com\/series\/([a-zA-Z0-9]*)\/").Groups[1].Value;
         }
         else if (Regex.IsMatch(url, @"reddit\.com", RegexOptions.IgnoreCase))
         {

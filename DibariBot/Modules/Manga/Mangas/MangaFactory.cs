@@ -13,7 +13,7 @@ public class MangaFactory(IServiceProvider services)
             "imgur" or
             "gist" or
             "nhentai" or
-            "mangasee" or
+            "weebcentral" or
             "reddit" or
             "imgchest" => typeof(CubariManga),
             "xkcd" => typeof(XkcdManga),
