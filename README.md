@@ -8,7 +8,7 @@ A Discord bot for quickly and easily referencing manga pages in discussions.
 - [x] [MangaDex](https://mangadex.org/) (Via [Cubari.moe](https://cubari.moe/), plus some extra custom handling)
 - [x] [Imgur](https://imgur.com/) (via [Cubari.moe](https://cubari.moe/))
 - [x] [GitHub/Gists](https://gist.github.com/) (via [Cubari.moe](https://cubari.moe/))
-- [x] [MangaSee](https://mangasee123.com/) (via [Cubari.moe](https://cubari.moe/))
+- [x] [Weebcentral](https://weebcentral.com/) (via [Cubari.moe](https://cubari.moe/))
 - [x] [Reddit](https://www.reddit.com/) (via [Cubari.moe](https://cubari.moe/))
 - [x] [ImgChest](https://imgchest.com/) (via [Cubari.moe](https://cubari.moe/))
 - [x] NH (via [Cubari.moe](https://cubari.moe/))
