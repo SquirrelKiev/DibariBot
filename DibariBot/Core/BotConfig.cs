@@ -110,7 +110,7 @@ namespace DibariBot
             new AboutField
             {
                 Name = "Source Code:",
-                Value = "https://github.com/SquirrelKiev/DibariBotNew"
+                Value = "https://github.com/SquirrelKiev/DibariBot"
             }
         ];
 
