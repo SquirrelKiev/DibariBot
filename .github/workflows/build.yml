@@ -41,10 +41,10 @@ jobs:
         run: dotnet test --no-build --configuration Release --verbosity normal
 
       - name: Publish
-        run: dotnet publish Asahi/Asahi.csproj --no-build --configuration Release --output ./publish/Asahi-${{ runner.os }}
+        run: dotnet publish DibariBot/DibariBot.csproj --no-build --configuration Release --output ./publish/DibariBot-${{ runner.os }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Asahi-${{ runner.os }}
-          path: ./publish/Asahi-${{ runner.os }}
+          name: DibariBot-${{ runner.os }}
+          path: ./publish/DibariBot-${{ runner.os }}
