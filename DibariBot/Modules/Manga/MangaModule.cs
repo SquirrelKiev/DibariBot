@@ -83,7 +83,7 @@ public class MangaModule(MangaService mangaHandler) : BotModule
             await mangaHandler.GetMangaMessage(Context.Guild?.Id ?? 0ul, GetParentChannel()?.Id ?? 0ul, state, isEphemeral);
 
         // it's probably an error
-        if (contents.components == null || contents.components.Components.Sum(component => component.Components.Count) <= 1)
+        if (contents.components == null)
         {
             await FollowupAsync(contents, true);
             return;

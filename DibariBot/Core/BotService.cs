@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using DibariBot.Database;
+using DibariBot.Modules;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -15,9 +16,12 @@ public class BotService(
     ILogger<BotService> logger,
     CommandHandler commandHandler,
     InteractionService interactionService,
-    CommandService commandService
+    CommandService commandService,
+    CustomStatusService customStatusService
 ) : BackgroundService
 {
+    private CancellationTokenSource cts = new();
+    
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var args = Environment.GetCommandLineArgs();
@@ -50,6 +54,8 @@ public class BotService(
     {
         if (ExecuteTask == null)
             return;
+
+        await cts.CancelAsync();
 
         await client.LogoutAsync();
         await client.StopAsync();
@@ -115,5 +121,7 @@ public class BotService(
         );
 
         await commandHandler.OnReady(Assembly.GetExecutingAssembly());
+
+        customStatusService.StartBackgroundTask(cts.Token);
     }
 }

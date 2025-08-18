@@ -122,6 +122,21 @@ namespace DibariBot
                                   "Ideally this should be formatted as a hex number. Default for example is 0xE74C3C")]
         public int ErrorEmbedColor { get; set; } = 0xE74C3C;
 
+        [YamlMember(Description = "Whether the bot should show an activity or not.")]
+        public bool ShouldHaveActivity { get; set; } = false;
+        
+        [YamlMember(Description = "The status the bot should have.")]
+        public UserStatus UserStatus { get; set; } = UserStatus.Online;
+        
+        [YamlMember(Description = "What type the activity should be.")]
+        public ActivityType ActivityType { get; set; } = ActivityType.CustomStatus;
+        
+        [YamlMember(Description = "The activities to cycle through.")]
+        public string[] BotActivities { get; set; } = ["Doing nothing."];
+        
+        [YamlMember(Description = "Optional streaming url, for the Streaming activity type.")]
+        public string ActivityStreamingUrl { get; set; } = "https://www.twitch.tv/jerma985";
+
         public struct AboutField
         {
             public string Name { get; set; }
