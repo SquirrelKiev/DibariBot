@@ -325,7 +325,7 @@ public partial class RegexFiltersPage(
             .WithSelectMenu(new SelectMenuBuilder()
                 .WithPlaceholder("Channels")
                 .WithType(ComponentType.ChannelSelect)
-                .WithChannelTypes(ChannelType.Text)
+                .WithChannelTypes(ChannelType.Text, ChannelType.Forum)
                 .WithCustomId(ModulePrefixes.CONFIG_FILTERS_CONFIRMATION_CHANNEL_SELECT)
                 .WithDefaultValues
                 (
