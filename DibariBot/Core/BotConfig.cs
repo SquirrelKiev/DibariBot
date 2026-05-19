@@ -6,9 +6,6 @@ namespace DibariBot
 {
     public class BotConfig
     {
-        [YamlMember(Description = "DON'T CHANGE!")]
-        public int Version { get; set; } = 1;
-
         [YamlMember(Description = @"Your bot token from https://discord.com/developers/applications. Don't share!")]
         public string BotToken { get; set; } = "BOT_TOKEN_HERE";
 

@@ -83,8 +83,6 @@ public class CommandHandler(
 
         var aliasAttempt = await ExecutePrefixAlias(userMessage, commandNameStart, commandContext);
 
-        logger.LogTrace("attempt {attempt}", aliasAttempt);
-
         if (!aliasAttempt)
             await commandService.ExecuteAsync(commandContext, commandNameStart, services);
     }

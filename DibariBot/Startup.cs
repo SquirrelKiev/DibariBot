@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Reflection;
 using Microsoft.Extensions.Hosting;
 using System.Text;
 using Microsoft.Extensions.Logging;
@@ -6,7 +7,6 @@ using Serilog.Extensions.Logging;
 using Serilog.Sinks.SystemConsole.Themes;
 using DibariBot.Modules.About;
 using DibariBot.Database;
-using DibariBot.Modules.ConfigCommand.Pages;
 using DibariBot.Modules.ConfigCommand;
 using Discord.Commands;
 using Discord.Interactions;
@@ -52,8 +52,7 @@ public static class Startup
                     .Enrich.FromLogContext()
                     .Enrich.WithThreadId()
                     .Enrich.WithThreadName()
-                    .Enrich.WithThreadName()
-                    .WriteTo.Console(theme: AnsiConsoleTheme.Literate)
+                    .WriteTo.Console(theme: AnsiConsoleTheme.Sixteen)
                 ;
 
             Directory.CreateDirectory(BotConfigFactory.DefaultDataDirectory);
@@ -115,12 +114,24 @@ public static class Startup
             .AddSingleton<ConfigCommandService>();
         ;
 
-        serviceCollection.AddHttpClient(Microsoft.Extensions.Options.Options.DefaultName)
-            .ConfigureHttpClient(DefaultHttpClientConfig);
+        var currentAssembly = Assembly.GetExecutingAssembly();
+        var projectName = currentAssembly.GetCustomAttribute<AssemblyProductAttribute>()?.Product;
+        var informationalVersion = currentAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion;
+        var repositoryUrl = currentAssembly.GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(x => x.Key == "RepositoryUrl")?.Value;
+        serviceCollection.ConfigureHttpClientDefaults(x =>
+        {
+            x.RemoveAllLoggers().ConfigureHttpClient(client =>
+            {
+                client.DefaultRequestHeaders.UserAgent.ParseAdd(
+                    $"{projectName}/{informationalVersion} (+{repositoryUrl})");
+                client.Timeout = TimeSpan.FromSeconds(10);
+            });
+        });
 
         serviceCollection.ConfigureHttpClientDefaults(x => x.RemoveAllLoggers());
 
-        // Stupid but im not sure how to do this with one scan and pass the inject option's param to WithLifetime
         serviceCollection.Scan(scan => scan.FromAssemblyOf<BotService>()
             .AddClasses(classes => classes.WithAttribute<InjectAttribute>(x =>
                 x.ServiceLifetime == ServiceLifetime.Singleton)
@@ -140,12 +151,6 @@ public static class Startup
         serviceCollection.AddHostedService<BotService>();
 
         return serviceCollection;
-
-        static void DefaultHttpClientConfig(HttpClient client)
-        {
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Dibari/DiscordBot (https://github.com/SquirrelKiev/DibariBotNew)");
-            client.Timeout = TimeSpan.FromSeconds(10);
-        }
     }
 
 }

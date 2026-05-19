@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Sdk Name="DotNet.ReproducibleBuilds.Isolated" Version="2.0.2"/>
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
@@ -7,23 +8,65 @@
 		<Nullable>enable</Nullable>
 		<ApplicationIcon>Dibari.ico</ApplicationIcon>
 
+		<Product>Dibari</Product>
 		<Version>0.0.0</Version>
-
 		<Copyright>enonibobble</Copyright>
+		<Company>enonibobble</Company>
+		<Authors>enonibobble</Authors>
+		<AuthorDiscordIds>298037013964259329</AuthorDiscordIds>
 
-		<!-- not necessary but -->
-		<RepositoryUrl>https://github.com/SquirrelKiev/DibariBot.git</RepositoryUrl>
+		<RepositoryUrl>https://github.com/SquirrelKiev/DibariBot</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
+
+		<PackageReadmeFile>../README.md</PackageReadmeFile>
 
 		<SourceControlInformationFeatureSupported>true</SourceControlInformationFeatureSupported>
 	</PropertyGroup>
 
 
-	<Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
-		<Exec Command="git describe --long --always --dirty --exclude=* --abbrev=8" ConsoleToMSBuild="True" IgnoreExitCode="False">
-			<Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput" />
+	<Target Name="SetSourceControlInfo" BeforeTargets="InitializeSourceControlInformation">
+		<Exec Command="git describe --long --always --dirty --exclude=*" IgnoreExitCode="False" ConsoleToMSBuild="true">
+			<Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput"/>
+		</Exec>
+
+		<Exec Command="git rev-parse HEAD" IgnoreExitCode="False" ConsoleToMSBuild="true">
+			<Output PropertyName="CommitHash" TaskParameter="ConsoleOutput"/>
+		</Exec>
+
+		<Exec Command="git show -s --format=%%ct" IgnoreExitCode="false" ConsoleToMSBuild="true">
+			<Output PropertyName="CommitDate" TaskParameter="ConsoleOutput"/>
+		</Exec>
+
+		<Exec Command="git show -s --format=%%B" IgnoreExitCode="false" ConsoleToMSBuild="true">
+			<Output PropertyName="CommitBody" TaskParameter="ConsoleOutput"/>
 		</Exec>
 	</Target>
+
+	<Target Name="SetSourceControlInfoAttribute" AfterTargets="InitializeSourceControlInformation">
+		<ItemGroup>
+			<AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+				<_Parameter1>CommitHash</_Parameter1>
+				<_Parameter2>$(CommitHash)</_Parameter2>
+			</AssemblyAttribute>
+
+			<AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+				<_Parameter1>CommitDate</_Parameter1>
+				<_Parameter2>$(CommitDate)</_Parameter2>
+			</AssemblyAttribute>
+
+			<AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+				<_Parameter1>CommitBody</_Parameter1>
+				<_Parameter2>$(CommitBody)</_Parameter2>
+			</AssemblyAttribute>
+		</ItemGroup>
+	</Target>
+
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+			<_Parameter1>AuthorDiscordIds</_Parameter1>
+			<_Parameter2>$(AuthorDiscordIds)</_Parameter2>
+		</AssemblyAttribute>
+	</ItemGroup>
 
 	<ItemGroup>
 		<Content Include="Dibari.ico" />

@@ -7,7 +7,7 @@ public struct MessageContents
     /// </summary>
     public static bool AddRedButtonDefault = true;
 
-    public string body;
+    public string? body;
     public Embed[]? embeds;
     public MessageComponent? components;
 
@@ -36,12 +36,17 @@ public struct MessageContents
     public MessageContents(EmbedBuilder embed, ComponentBuilder? components = null, string body = "", bool redButton = true)
     {
         this.body = body;
-        embeds = new[] { embed.Build() };
+        embeds = [embed.Build()];
 
         if (AddRedButtonDefault && redButton)
             components ??= new ComponentBuilder().WithRedButton();
 
         if (components != null)
             this.components = components.Build();
+    }
+    
+    public MessageContents(MessageComponent component)
+    {
+        this.components = component;
     }
 }

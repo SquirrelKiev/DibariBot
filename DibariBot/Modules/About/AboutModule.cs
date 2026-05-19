@@ -10,10 +10,8 @@ public class AboutModule(AboutService aboutService) : BotModule
     [HelpPageDescription("Pulls up info about the bot.")]
     public async Task AboutSlash()
     {
-        await DeferAsync();
+        var component = await aboutService.BuildComponent();
 
-        var contents = await aboutService.GetMessageContents(await AboutService.GetPlaceholders(Context.Client), Context.User.Id, Context.Guild);
-
-        await FollowupAsync(contents);
+        await RespondAsync(components: component, allowedMentions: AllowedMentions.None);
     }
 }

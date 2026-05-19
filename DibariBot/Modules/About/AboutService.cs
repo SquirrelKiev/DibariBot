@@ -1,60 +1,126 @@
-﻿using Discord;
+﻿using System.Reflection;
+using Discord.WebSocket;
+using Humanizer;
 
 namespace DibariBot.Modules.About;
 
-[Inject(Microsoft.Extensions.DependencyInjection.ServiceLifetime.Singleton)]
-public class AboutService(BotConfig botConfig, ColorProvider colorProvider)
+[Inject(ServiceLifetime.Singleton)]
+public class AboutService
 {
-    /// <param name="placeholders">Array of KVPs, with key as the phrase to replace and value as what to replace with.
-    ///     Recommended to use with <see cref="GetPlaceholders"/>.</param>
-    /// <param name="userId">The caller's User ID.
-    ///     The user ID is used to determine if they should see the manager controls.</param>
-    public async Task<MessageContents> GetMessageContents(KeyValuePair<string, string>[] placeholders, ulong userId, IGuild? guild)
+    private Lazy<ProjectInfo> projectInfo;
+    private Lazy<Task<ProfileInfo>> profileInfo;
+
+    private readonly DiscordSocketClient discordClient;
+
+    public AboutService(DiscordSocketClient discordClient)
     {
-        var fields = new EmbedFieldBuilder[botConfig.AboutPageFields.Length];
-        for (int i = 0; i < fields.Length; i++)
-        {
-            var configField = botConfig.AboutPageFields[i];
+        this.discordClient = discordClient;
 
-            var builder = new EmbedFieldBuilder()
-                .WithName(ReplacePlaceholders(configField.Name, placeholders))
-                .WithValue(ReplacePlaceholders(configField.Value, placeholders))
-                .WithIsInline(configField.Inline);
-
-            fields[i] = builder;
-        }
-
-        var components = new ComponentBuilder();
-
-        components.WithRedButton();
-
-        var embed = new EmbedBuilder()
-            .WithAuthor(ReplacePlaceholders(botConfig.AboutPageTitle, placeholders))
-            .WithDescription(ReplacePlaceholders(botConfig.AboutPageDescription, placeholders))
-            .WithColor(await colorProvider.GetEmbedColor(guild))
-            .WithFields(fields);
-
-        return new MessageContents(string.Empty, embed.Build(), components);
+        projectInfo = new Lazy<ProjectInfo>(GetProjectInfo);
+        profileInfo = new Lazy<Task<ProfileInfo>>(GetProfileInfo);
+    }
+    
+    public void NukeCache()
+    {
+        projectInfo = new Lazy<ProjectInfo>(GetProjectInfo);
+        profileInfo = new Lazy<Task<ProfileInfo>>(GetProfileInfo);
     }
 
-    public static string ReplacePlaceholders(string original, params KeyValuePair<string, string>[] placeholders)
+    public async Task<MessageComponent> BuildComponent()
     {
-        var newString = original;
+        var components = new ComponentBuilderV2();
 
-        foreach (var placeholder in placeholders)
-        {
-            newString = newString.Replace($"{{{{{placeholder.Key}}}}}", placeholder.Value);
-        }
+        var profile = await profileInfo.Value;
 
-        return newString;
+        var container = new ContainerBuilder();
+        if (profile.Banner != null)
+            container.WithMediaGallery([profile.Banner]);
+
+        var project = projectInfo.Value;
+        var versionString = GetFriendlyVersionString(project);
+
+        var text = $"## {profile.Username}\n" +
+                   $"Also known as {project.ProjectName}!\n" +
+                   $"**Version** {versionString}\n" +
+                   $"**By** {project.AuthorDiscordIds?.Split(',').Select(x => $"<@{x}>").Humanize() ?? project.Author}";
+
+        container.WithSection(new SectionBuilder(new ThumbnailBuilder(profile.Avatar), new TextDisplayBuilder(text)));
+
+        components.WithContainer(container);
+
+        return components.Build();
     }
 
-    public static async Task<KeyValuePair<string, string>[]> GetPlaceholders(IDiscordClient client)
+    private static string GetFriendlyVersionString(ProjectInfo projectInfo)
     {
-        return new KeyValuePair<string, string>[]
+        string versionString;
+        if (projectInfo.InformationalVersion == null)
         {
-            new("guilds", (await client.GetGuildsAsync()).Count.ToString()),
-            new("botUsername", client.CurrentUser.Username)
-        };
+            versionString = "Unknown";
+        }
+        else if (projectInfo.CommitHash == null || projectInfo.RepositoryUrl == null ||
+                 projectInfo.CommitBody == null || projectInfo.CommitDate == 0)
+        {
+            versionString = projectInfo.InformationalVersion;
+        }
+        else
+        {
+            var maxIndex = projectInfo.CommitBody.IndexOf(';');
+            var shortBody = maxIndex == -1
+                ? projectInfo.CommitBody.Truncate(100)
+                : projectInfo.CommitBody[..maxIndex].Truncate(100);
+
+            versionString =
+                $"[{projectInfo.InformationalVersion}]({projectInfo.RepositoryUrl}/commit/{projectInfo.CommitHash}) - " +
+                $"`{shortBody.Replace("`", "\\`")}` (<t:{projectInfo.CommitDate}:{(char)TimestampTagStyles.Relative}>)";
+        }
+
+        return versionString;
+    }
+
+    private async Task<ProfileInfo> GetProfileInfo()
+    {
+        var self = discordClient.Rest.CurrentUser;
+
+        await self.UpdateAsync();
+
+        var username = self.Username;
+        var banner = self.GetBannerUrl(ImageFormat.Auto, 4096);
+        var avatar = self.GetAvatarUrl(ImageFormat.Auto, 4096);
+        
+        return new ProfileInfo(username, banner, avatar);
+    }
+
+    private static ProjectInfo GetProjectInfo()
+    {
+        var currentAssembly = Assembly.GetExecutingAssembly();
+
+        var informationalVersion = currentAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion;
+        var projectName = currentAssembly.GetCustomAttribute<AssemblyProductAttribute>()?.Product;
+        var author = currentAssembly.GetCustomAttribute<AssemblyCompanyAttribute>()?.Company;
+        var metadataAttributes = currentAssembly.GetCustomAttributes<AssemblyMetadataAttribute>().ToList();
+        var repositoryUrl = metadataAttributes.FirstOrDefault(x => x.Key == "RepositoryUrl")?.Value;
+        var commitHash = metadataAttributes.FirstOrDefault(x => x.Key == "CommitHash")?.Value;
+        var authorDiscordIds = metadataAttributes.FirstOrDefault(x => x.Key == "AuthorDiscordIds")?.Value;
+        var commitBody = metadataAttributes.FirstOrDefault(x => x.Key == "CommitBody")?.Value;
+        if (!ulong.TryParse(metadataAttributes.FirstOrDefault(x => x.Key == "CommitDate")?.Value, out var commitDate))
+            commitDate = 0;
+
+        return new ProjectInfo(projectName, informationalVersion, repositoryUrl, commitHash, commitBody, commitDate,
+            author, authorDiscordIds);
     }
 }
+
+public readonly record struct ProjectInfo(
+    string? ProjectName,
+    string? InformationalVersion,
+    string? RepositoryUrl,
+    string? CommitHash,
+    string? CommitBody,
+    ulong CommitDate,
+    string? Author,
+    string? AuthorDiscordIds);
+
+
+public readonly record struct ProfileInfo(string Username, string? Banner, string Avatar);

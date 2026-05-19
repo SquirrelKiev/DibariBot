@@ -23,7 +23,6 @@ public class CubariManga : IManga
 
     public virtual async Task<IManga> Initialize(SeriesIdentifier id)
     {
-        ArgumentNullException.ThrowIfNull(id, nameof(id));
         ArgumentNullException.ThrowIfNull(id.platform, nameof(id.platform));
         ArgumentNullException.ThrowIfNull(id.series, nameof(id.series));
 
