@@ -23,5 +23,6 @@ public enum Page
 public enum Conditions
 {
     None = 0,
-    NotInDm = 1,
+    NotInDm = 1 << 0,
+    PrefixCommandsEnabled = 1 << 1
 }

@@ -21,6 +21,9 @@ namespace DibariBot
                                 "Example Postgres string: Host=127.0.0.1;Username=postgres;Password=;Database=botdb\n" +
                                 "Example Sqlite string: Data Source=data/BotDb.db")]
         public string DatabaseConnectionString { get; set; } = "Data Source=data/DibariBot.db";
+        
+        [YamlMember(Description = "Whether or not to enable prefix commands. Mentioning the bot will still work.")]
+        public bool PrefixCommandsSupport { get; set; } = true;
 
         [YamlMember(Description = "The reaction to put on prefix commands when an unhandled error occurs. Will only appear on prefix commands.")]
         public string ErrorEmote { get; set; } = "\u2753";

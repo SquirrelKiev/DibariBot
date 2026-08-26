@@ -2,7 +2,7 @@
 
 namespace DibariBot.Modules.ConfigCommand;
 
-public class ConfigCommandService(IServiceProvider services)
+public class ConfigCommandService(IServiceProvider services, BotConfig botConfig)
 {
     public struct State(Page page, string data)
     {
@@ -89,10 +89,15 @@ public class ConfigCommandService(IServiceProvider services)
         ConfigPages.Where(page =>
         {
             var passes = true;
-
+            
             if (passes && page.ConfigPageAttribute.Conditions.HasFlag(Conditions.NotInDm))
             {
                 passes = !isDm;
+            }
+            
+            if (passes && page.ConfigPageAttribute.Conditions.HasFlag(Conditions.PrefixCommandsEnabled))
+            {
+                passes = botConfig.PrefixCommandsSupport;
             }
 
             return passes;

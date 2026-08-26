@@ -85,16 +85,22 @@ public static class Startup
 
     private static IServiceCollection AddBotServices(this IServiceCollection serviceCollection, BotConfig botConfig)
     {
+        var intents = GatewayIntents.Guilds |
+                      GatewayIntents.GuildMessages |
+                      GatewayIntents.DirectMessages;
+
+        if (botConfig.PrefixCommandsSupport)
+        {
+            intents |= GatewayIntents.MessageContent;
+        }
+
         serviceCollection
             .AddSingleton(botConfig)
             .AddCache(botConfig)
             .AddSingleton(botConfig)
             .AddSingleton(new DiscordSocketClient(new DiscordSocketConfig
             {
-                GatewayIntents = GatewayIntents.Guilds |
-                                 GatewayIntents.MessageContent |
-                                 GatewayIntents.GuildMessages |
-                                 GatewayIntents.DirectMessages,
+                GatewayIntents = intents,
                 LogLevel = LogSeverity.Verbose
             }))
             .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>(),

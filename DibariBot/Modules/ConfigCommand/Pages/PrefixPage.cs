@@ -12,7 +12,7 @@ public class SetPrefixModal : IModal
     public string Prefix { get; set; } = "";
 }
 
-[ConfigPage(Id, "Prefix", "What prefix to use for prefix commands.", Conditions.NotInDm)]
+[ConfigPage(Id, "Prefix", "What prefix to use for prefix commands.", Conditions.NotInDm | Conditions.PrefixCommandsEnabled)]
 public class PrefixPage(ConfigCommandService configCommandService, DbService dbService, ColorProvider colorProvider) : BotModule, IConfigPage
 {
     public const Page Id = Page.Prefix;

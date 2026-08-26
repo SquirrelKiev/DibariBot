@@ -71,12 +71,19 @@ public class CommandHandler(
     protected async Task RunCommand(SocketUserMessage userMessage)
     {
         // TODO: Merge the dbContext calls here
-        var prefix = await GetPrefix(userMessage.Channel);
-
         var commandNameStart = 0;
-        if (!userMessage.HasStringPrefix(prefix, ref commandNameStart))
+
+        if (!userMessage.HasMentionPrefix(client.CurrentUser, ref commandNameStart))
         {
-            return;
+            if (!botConfig.PrefixCommandsSupport)
+                return;
+
+            var prefix = await GetPrefix(userMessage.Channel);
+
+            if (!userMessage.HasStringPrefix(prefix, ref commandNameStart))
+            {
+                return;
+            }
         }
 
         var commandContext = new SocketCommandContext(client, userMessage);

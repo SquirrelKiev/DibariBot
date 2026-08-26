@@ -1,13 +1,16 @@
 ﻿using DibariBot.Database;
-using Discord;
+using Discord.WebSocket;
 
 namespace DibariBot.Modules.Help;
 
 [Inject(ServiceLifetime.Singleton)]
-public class LazyHelpService(ColorProvider colorProvider)
+public class LazyHelpService(ColorProvider colorProvider, BotConfig botConfig, DiscordSocketClient client)
 {
     public MessageContents GetMessageContents(string prefix, GuildConfig? guild)
     {
+        if (!botConfig.PrefixCommandsSupport)
+            prefix = $"@{client.CurrentUser.Username}#{client.CurrentUser.Discriminator} ";
+
         var eb = new EmbedBuilder()
             .WithDescription("Noting that any prefix command parameter wrapped in square brackets is an optional named parameter." +
                              $"\nUsage is pretty much how the command shows, just without square brackets. e.g.`{prefix}manga ch:123`" +
